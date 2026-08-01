@@ -1,0 +1,51 @@
+{
+  "target_knowledge_bases": {
+    "type": "list",
+    "description": "要接收 NRadio 内容的 AstrBot 知识库",
+    "hint": "请先在 AstrBot 中创建知识库并配置好 Embedding 模型，再在这里选择。插件不会擅自创建或更换向量模型。",
+    "default": [],
+    "_special": "select_knowledgebase"
+  },
+  "github_repository": {
+    "type": "string",
+    "description": "GitHub 知识库仓库",
+    "default": "NRadio-Bot/nradio-platform"
+  },
+  "github_branch": {
+    "type": "string",
+    "description": "只同步已经审核合并的分支",
+    "default": "main"
+  },
+  "knowledge_path": {
+    "type": "string",
+    "description": "仓库内结构化知识文件路径",
+    "default": "knowledge-base/import/knowledge.jsonl"
+  },
+  "github_token": {
+    "type": "string",
+    "description": "GitHub Fine-grained Token（可留空改用环境变量）",
+    "hint": "只授予 NRadio-Bot/nradio-platform 的 Contents: Read 权限即可。该值会保存在 AstrBot 插件配置中；若不想落盘，请使用下面的环境变量。",
+    "obvious_hint": true,
+    "default": ""
+  },
+  "github_token_environment": {
+    "type": "string",
+    "description": "读取 GitHub Token 的环境变量名",
+    "default": "NRADIO_GITHUB_TOKEN"
+  },
+  "auto_sync": {
+    "type": "bool",
+    "description": "自动检查并同步 GitHub main 分支",
+    "default": true
+  },
+  "sync_interval_minutes": {
+    "type": "int",
+    "description": "自动检查间隔（分钟，最小 5 分钟）",
+    "default": 30
+  },
+  "initial_delay_seconds": {
+    "type": "int",
+    "description": "AstrBot 启动后首次同步的等待时间（秒）",
+    "default": 15
+  }
+}
