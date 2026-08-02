@@ -28,7 +28,7 @@ class TargetSyncResult:
 
 @register(
     "astrbot_plugin_nradio_knowledge",
-    "NRadio-Bot",
+    "NRadio-test",
     "将 NRadio GitHub 知识库安全同步到 AstrBot",
     "1.0.0",
 )
@@ -163,7 +163,7 @@ class NRadioKnowledgePlugin(Star):
         client = GitHubKnowledgeClient(token=token)
         return await client.fetch(
             repository=str(
-                self.config.get("github_repository", "NRadio-Bot/nradio-platform")
+                self.config.get("github_repository", "NRadio-test/nradio-web-platform")
             ),
             branch=str(self.config.get("github_branch", "main")),
             knowledge_path=str(

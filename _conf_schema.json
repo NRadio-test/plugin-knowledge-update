@@ -9,7 +9,7 @@
   "github_repository": {
     "type": "string",
     "description": "GitHub 知识库仓库",
-    "default": "NRadio-Bot/nradio-platform"
+    "default": "NRadio-test/nradio-web-platform"
   },
   "github_branch": {
     "type": "string",
@@ -24,7 +24,7 @@
   "github_token": {
     "type": "string",
     "description": "GitHub Fine-grained Token（可留空改用环境变量）",
-    "hint": "只授予 NRadio-Bot/nradio-platform 的 Contents: Read 权限即可。该值会保存在 AstrBot 插件配置中；若不想落盘，请使用下面的环境变量。",
+    "hint": "只授予 NRadio-test/nradio-web-platform 的 Contents: Read 权限即可。该值会保存在 AstrBot 插件配置中；若不想落盘，请使用下面的环境变量。",
     "obvious_hint": true,
     "default": ""
   },

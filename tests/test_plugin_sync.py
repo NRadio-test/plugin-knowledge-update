@@ -55,8 +55,11 @@ def _install_astrbot_stubs() -> None:
 
 
 _install_astrbot_stubs()
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-plugin_module = importlib.import_module("astrbot_plugin_nradio_knowledge.main")
+package_name = "astrbot_plugin_nradio_knowledge"
+package = types.ModuleType(package_name)
+package.__path__ = [str(Path(__file__).resolve().parents[1])]
+sys.modules[package_name] = package
+plugin_module = importlib.import_module(f"{package_name}.main")
 NRadioKnowledgePlugin = plugin_module.NRadioKnowledgePlugin
 
 

@@ -1,10 +1,10 @@
 name: astrbot_plugin_nradio_knowledge
 display_name: NRadio 知识库自动同步
-desc: 将 NRadio-Bot/nradio-platform 中经审核合并的结构化知识安全同步到 AstrBot。
+desc: 将 NRadio-test/nradio-web-platform 中经审核合并的结构化知识安全同步到 AstrBot。
 short_desc: 自动同步经 GitHub 审核发布的 NRadio 知识。
 version: v1.0.0
-author: NRadio-Bot
-repo: https://github.com/NRadio-Bot/astrbot_plugin_nradio_knowledge
+author: NRadio-test
+repo: https://github.com/NRadio-test/plugin-knowledge-update
 astrbot_version: ">=4.26,<5"
 support_platforms:
   - aiocqhttp
