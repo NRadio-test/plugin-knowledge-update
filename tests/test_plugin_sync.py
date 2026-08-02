@@ -120,6 +120,36 @@ class PluginSyncTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(result.uploaded)
         self.assertEqual([call[0] for call in helper.calls], ["list"])
 
+    async def test_status_reports_last_success_after_failed_check(self):
+        plugin = self._plugin(FakeKnowledgeBaseHelper([]))
+        states = {
+            "last_sync": {
+                "ok": False,
+                "at": "2026-08-03T01:02:03+00:00",
+                "message": "GitHub 暂时不可用",
+            },
+            "last_success": {
+                "ok": True,
+                "at": "2026-08-03T00:00:00+00:00",
+                "sha": "1234567890abcdef",
+                "entry_count": 22,
+                "kb_names": ["鹏仔"],
+            },
+        }
+
+        async def get_kv_data(key, default):
+            return states.get(key, default)
+
+        plugin.get_kv_data = get_kv_data
+        event = SimpleNamespace(plain_result=lambda value: value)
+        messages = [message async for message in plugin.status_command(event)]
+
+        self.assertEqual(len(messages), 1)
+        self.assertIn("最近检查：失败", messages[0])
+        self.assertIn("上次成功更新：2026-08-03 08:00:00（北京时间）", messages[0])
+        self.assertIn("目前知识条数：22", messages[0])
+        self.assertIn("目标知识库：鹏仔", messages[0])
+
 
 async def _async_value(value):
     return value

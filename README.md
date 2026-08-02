@@ -15,8 +15,8 @@
 5. 可以把 Token 填入插件配置；更推荐在 AstrBot 容器中设置 `NRADIO_GITHUB_TOKEN` 环境变量，这样 Token 不会写入插件配置文件。
 6. 保存并重载插件。默认在启动 15 秒后同步一次，之后每 30 分钟检查一次；GitHub 文件版本未变化时不会重复向量化。
 
-管理员也可以在聊天中使用 `/nradio_kb_sync` 立即同步，使用 `/nradio_kb_status` 查看最近一次结果。
+AstrBot 管理员可以在聊天中使用 `/ku-up` 立即同步，使用 `/ku-info` 查看最近检查结果、上次成功更新时间、知识条数和 GitHub 版本。旧指令 `/nradio_kb_sync` 与 `/nradio_kb_status` 继续作为兼容别名保留。这些指令受 AstrBot 管理员 SID 权限控制，普通用户无法执行。
 
 ## 权限边界
 
-插件对 GitHub 只需要读取权限，对 AstrBot 只操作配置中选中的知识库。GitHub 审核、PR 合并和知识内容修改仍在 `nradio-platform` 中完成，插件本身不会生成、审核或改写知识。
+插件对 GitHub 只需要读取权限，对 AstrBot 只操作配置中选中的知识库。GitHub 审核、PR 合并和知识内容修改仍在 `NRadio-test/nradio-web-platform` 中完成，插件本身不会生成、审核或改写知识。
