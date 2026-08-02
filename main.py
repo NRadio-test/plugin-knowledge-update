@@ -30,7 +30,7 @@ class TargetSyncResult:
     "astrbot_plugin_nradio_knowledge",
     "NRadio-test",
     "将 NRadio GitHub 知识库安全同步到 AstrBot",
-    "1.1.0",
+    "1.1.1",
 )
 class NRadioKnowledgePlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
@@ -202,12 +202,17 @@ class NRadioKnowledgePlugin(Star):
 
     async def _sync_target(
         self,
-        kb_id: str,
+        kb_ref: str,
         snapshot: GitHubKnowledgeSnapshot,
     ) -> TargetSyncResult:
-        kb_helper = await self.context.kb_manager.get_kb(kb_id)
+        kb_manager = self.context.kb_manager
+        kb_helper = await kb_manager.get_kb(kb_ref)
         if kb_helper is None:
-            raise RuntimeError("目标知识库不存在或尚未初始化")
+            get_kb_by_name = getattr(kb_manager, "get_kb_by_name", None)
+            if callable(get_kb_by_name):
+                kb_helper = await get_kb_by_name(kb_ref)
+        if kb_helper is None:
+            raise RuntimeError(f"目标知识库 {kb_ref} 不存在或尚未初始化")
 
         current_documents = await kb_helper.list_documents(
             limit=500,

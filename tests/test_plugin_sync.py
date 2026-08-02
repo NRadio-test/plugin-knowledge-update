@@ -82,7 +82,10 @@ class FakeKnowledgeBaseHelper:
 
 class PluginSyncTests(unittest.IsolatedAsyncioTestCase):
     def _plugin(self, helper):
-        manager = SimpleNamespace(get_kb=lambda _kb_id: _async_value(helper))
+        manager = SimpleNamespace(
+            get_kb=lambda _kb_id: _async_value(helper),
+            get_kb_by_name=lambda _kb_name: _async_value(helper),
+        )
         context = SimpleNamespace(kb_manager=manager)
         return NRadioKnowledgePlugin(context, {})
 
@@ -119,6 +122,30 @@ class PluginSyncTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertFalse(result.uploaded)
         self.assertEqual([call[0] for call in helper.calls], ["list"])
+
+    async def test_resolves_knowledge_base_selected_by_name(self):
+        helper = FakeKnowledgeBaseHelper([])
+        calls = []
+
+        async def get_kb(kb_ref):
+            calls.append(("id", kb_ref))
+            return None
+
+        async def get_kb_by_name(kb_ref):
+            calls.append(("name", kb_ref))
+            return helper
+
+        manager = SimpleNamespace(
+            get_kb=get_kb,
+            get_kb_by_name=get_kb_by_name,
+        )
+        plugin = NRadioKnowledgePlugin(SimpleNamespace(kb_manager=manager), {})
+
+        result = await plugin._sync_target("鹏仔", self._snapshot())
+
+        self.assertTrue(result.uploaded)
+        self.assertEqual(calls, [("id", "鹏仔"), ("name", "鹏仔")])
+        self.assertEqual(result.kb_name, "NRadio 正式知识库")
 
     async def test_status_reports_last_success_after_failed_check(self):
         plugin = self._plugin(FakeKnowledgeBaseHelper([]))
