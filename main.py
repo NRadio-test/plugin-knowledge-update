@@ -4,7 +4,7 @@ import asyncio
 import contextlib
 import os
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from astrbot.api import AstrBotConfig, logger
@@ -30,7 +30,7 @@ class TargetSyncResult:
     "astrbot_plugin_nradio_knowledge",
     "NRadio-test",
     "将 NRadio GitHub 知识库安全同步到 AstrBot",
-    "1.0.0",
+    "1.1.0",
 )
 class NRadioKnowledgePlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
@@ -47,7 +47,7 @@ class NRadioKnowledgePlugin(Star):
             )
 
     @filter.permission_type(filter.PermissionType.ADMIN)
-    @filter.command("nradio_kb_sync")
+    @filter.command("ku-up", alias={"nradio_kb_sync"})
     async def sync_command(self, event: AstrMessageEvent):
         """立即把 GitHub 中的 NRadio 知识同步到选定的 AstrBot 知识库。"""
         if self._sync_lock.locked():
@@ -71,21 +71,48 @@ class NRadioKnowledgePlugin(Star):
         )
 
     @filter.permission_type(filter.PermissionType.ADMIN)
-    @filter.command("nradio_kb_status")
+    @filter.command("ku-info", alias={"nradio_kb_status"})
     async def status_command(self, event: AstrMessageEvent):
         """查看 NRadio 知识库最近一次同步状态。"""
-        state = await self.get_kv_data("last_sync", None)
-        if not isinstance(state, dict):
+        last_check = await self.get_kv_data("last_sync", None)
+        last_success = await self.get_kv_data("last_success", None)
+        if (
+            not isinstance(last_success, dict)
+            and isinstance(last_check, dict)
+            and last_check.get("ok")
+        ):
+            last_success = last_check
+        if not isinstance(last_check, dict) and not isinstance(last_success, dict):
             yield event.plain_result("NRadio 知识库还没有同步记录。")
             return
 
-        status = "成功" if state.get("ok") else "失败"
-        details = state.get("message", "无详情")
-        yield event.plain_result(
-            f"最近同步：{status}\n"
-            f"时间：{state.get('at', '未知')}\n"
-            f"详情：{details}"
-        )
+        lines = ["NRadio 知识库状态"]
+        if isinstance(last_check, dict):
+            status = "成功" if last_check.get("ok") else "失败"
+            lines.extend(
+                [
+                    f"最近检查：{status}",
+                    f"检查时间：{_format_sync_time(last_check.get('at'))}",
+                ]
+            )
+            if not last_check.get("ok"):
+                lines.append(f"失败原因：{last_check.get('message', '无详情')}")
+
+        if isinstance(last_success, dict):
+            lines.extend(
+                [
+                    f"上次成功更新：{_format_sync_time(last_success.get('at'))}",
+                    f"目前知识条数：{last_success.get('entry_count', '未知')}",
+                    f"GitHub 版本：{str(last_success.get('sha', '未知'))[:12]}",
+                ]
+            )
+            kb_names = last_success.get("kb_names", [])
+            if isinstance(kb_names, list) and kb_names:
+                lines.append(f"目标知识库：{'、'.join(map(str, kb_names))}")
+        else:
+            lines.append("上次成功更新：尚无")
+
+        yield event.plain_result("\n".join(lines))
 
     async def terminate(self) -> None:
         if self._scheduler_task is not None:
@@ -136,16 +163,16 @@ class NRadioKnowledgePlugin(Star):
                 f"GitHub {snapshot.blob_sha[:12]}，{len(snapshot.entries)} 条知识，"
                 f"更新 {updated}/{len(results)} 个目标"
             )
-            await self.put_kv_data(
-                "last_sync",
-                {
-                    "ok": True,
-                    "at": _utc_now(),
-                    "message": message,
-                    "sha": snapshot.blob_sha,
-                    "entry_count": len(snapshot.entries),
-                },
-            )
+            success_state = {
+                "ok": True,
+                "at": _utc_now(),
+                "message": message,
+                "sha": snapshot.blob_sha,
+                "entry_count": len(snapshot.entries),
+                "kb_names": [result.kb_name for result in results],
+            }
+            await self.put_kv_data("last_sync", success_state)
+            await self.put_kv_data("last_success", success_state)
             logger.info(f"NRadio 知识库同步完成：{message}")
             return snapshot, results
 
@@ -231,3 +258,16 @@ class NRadioKnowledgePlugin(Star):
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def _format_sync_time(value: Any) -> str:
+    if not isinstance(value, str) or not value.strip():
+        return "未知"
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        beijing = parsed.astimezone(timezone(timedelta(hours=8)))
+        return beijing.strftime("%Y-%m-%d %H:%M:%S（北京时间）")
+    except ValueError:
+        return value
