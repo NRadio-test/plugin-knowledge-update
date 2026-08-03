@@ -22,6 +22,12 @@ class PluginPageContractTests(unittest.TestCase):
         self.assertIn("confirm_info_id: entry.info_id", script)
         self.assertIn("await loadEntries(true)", script)
 
+    def test_entry_edit_opens_the_authenticated_website_editor(self):
+        script = (PAGE_ROOT / "app.js").read_text(encoding="utf-8")
+
+        self.assertIn("edit.href = entry.edit_url", script)
+        self.assertIn("edit.target = '_blank'", script)
+
 
 if __name__ == "__main__":
     unittest.main()

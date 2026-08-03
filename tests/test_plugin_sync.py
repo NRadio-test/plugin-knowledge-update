@@ -119,6 +119,20 @@ class PluginSyncTests(unittest.IsolatedAsyncioTestCase):
             [route[0] for route in routes],
         )
 
+    def test_manager_entry_contains_configured_edit_url(self):
+        entry = self._snapshot().entries[0]
+
+        payload = plugin_module._entry_payload(
+            entry,
+            None,
+            "https://nradio.fallaxaura.dpdns.org/knowledge/manage/edit/",
+        )
+
+        self.assertEqual(
+            payload["edit_url"],
+            "https://nradio.fallaxaura.dpdns.org/knowledge/manage/edit/?id=1",
+        )
+
     async def test_uploads_new_version_before_deleting_old_version(self):
         old_document = SimpleNamespace(
             doc_name="NRadio-Knowledge-old.md",
