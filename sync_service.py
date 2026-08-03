@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 from dataclasses import dataclass
 from typing import Any
@@ -31,14 +32,28 @@ class KnowledgeEntry:
 class GitHubKnowledgeSnapshot:
     blob_sha: str
     entries: tuple[KnowledgeEntry, ...]
+    variant: str = ""
 
     @property
     def document_name(self) -> str:
+        if self.variant:
+            return f"{MANAGED_DOCUMENT_PREFIX}{self.blob_sha[:8]}-{self.variant[:8]}.md"
         return f"{MANAGED_DOCUMENT_PREFIX}{self.blob_sha[:12]}.md"
 
     @property
     def chunks(self) -> list[str]:
         return [render_entry(entry) for entry in self.entries]
+
+    def excluding(self, entry_ids: set[str]) -> "GitHubKnowledgeSnapshot":
+        excluded = sorted(entry.entry_id for entry in self.entries if entry.entry_id in entry_ids)
+        if not excluded:
+            return self
+        variant = hashlib.sha256("\n".join(excluded).encode("utf-8")).hexdigest()
+        return GitHubKnowledgeSnapshot(
+            blob_sha=self.blob_sha,
+            entries=tuple(entry for entry in self.entries if entry.entry_id not in entry_ids),
+            variant=variant,
+        )
 
 
 def parse_knowledge_jsonl(payload: str) -> tuple[KnowledgeEntry, ...]:
@@ -94,7 +109,7 @@ def render_entry(entry: KnowledgeEntry) -> str:
     lines = [
         f"# {entry.title}",
         "",
-        f"知识编号：{entry.entry_id}",
+        f"InfoID：{entry.entry_id}",
         f"知识内容：{entry.text}",
         f"上传者：{entry.uploaded_by}",
         f"来源类型：{entry.source_type}",

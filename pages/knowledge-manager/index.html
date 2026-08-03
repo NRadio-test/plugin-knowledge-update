@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NRadio 知识条目管理器</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">NRADIO KNOWLEDGE MANAGER</p>
+          <h1>知识条目管理器</h1>
+          <p class="subtitle">按 InfoID 检索、核对和停用 AstrBot 中的单条知识。</p>
+        </div>
+        <button class="button primary" id="sync-button" type="button">立即同步</button>
+      </header>
+
+      <section class="stats" aria-label="知识库概况">
+        <article><span>源数据</span><strong id="source-count">—</strong></article>
+        <article><span>AstrBot 启用</span><strong id="active-count">—</strong></article>
+        <article><span>回收站</span><strong id="deleted-count">—</strong></article>
+        <article><span>GitHub 版本</span><strong id="source-sha">—</strong></article>
+      </section>
+
+      <section class="toolbar">
+        <label class="search">
+          <span>检索</span>
+          <input id="search-input" type="search" placeholder="搜索 InfoID、标题、正文、标签或来源…" autocomplete="off" />
+        </label>
+        <div class="segments" role="group" aria-label="条目状态">
+          <button class="segment active" data-status="active" type="button">启用中</button>
+          <button class="segment" data-status="deleted" type="button">回收站</button>
+          <button class="segment" data-status="all" type="button">全部</button>
+        </div>
+        <button class="button ghost" id="refresh-button" type="button">刷新源数据</button>
+      </section>
+
+      <div class="notice" id="notice" role="status">正在读取知识条目…</div>
+      <section class="entry-list" id="entry-list" aria-live="polite"></section>
+
+      <footer class="pager" id="pager" hidden>
+        <button class="button ghost" id="previous-page" type="button">上一页</button>
+        <span id="page-label"></span>
+        <button class="button ghost" id="next-page" type="button">下一页</button>
+      </footer>
+    </main>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

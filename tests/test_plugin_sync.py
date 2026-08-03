@@ -43,6 +43,14 @@ def _install_astrbot_stubs() -> None:
     star.Context = object
     star.Star = FakeStar
     star.register = decorator
+    web = types.ModuleType("astrbot.api.web")
+    web.request = SimpleNamespace(query={}, username="tester")
+    web.json_response = lambda value, **_kwargs: value
+    web.error_response = lambda message, **kwargs: {
+        "status": "error",
+        "message": message,
+        "status_code": kwargs.get("status_code", 400),
+    }
 
     sys.modules.update(
         {
@@ -50,6 +58,7 @@ def _install_astrbot_stubs() -> None:
             "astrbot.api": api,
             "astrbot.api.event": event,
             "astrbot.api.star": star,
+            "astrbot.api.web": web,
         }
     )
 
@@ -94,6 +103,21 @@ class PluginSyncTests(unittest.IsolatedAsyncioTestCase):
             '{"id":"1","title":"标题","text":"内容","tags":[]}'
         )[0]
         return GitHubKnowledgeSnapshot("1234567890abcdef", (entry,))
+
+    async def test_registers_manager_page_apis(self):
+        routes = []
+        context = SimpleNamespace(
+            kb_manager=SimpleNamespace(),
+            register_web_api=lambda *args: routes.append(args),
+        )
+
+        NRadioKnowledgePlugin(context, {})
+
+        self.assertEqual(len(routes), 4)
+        self.assertIn(
+            "/astrbot_plugin_nradio_knowledge/entries/<info_id>/delete",
+            [route[0] for route in routes],
+        )
 
     async def test_uploads_new_version_before_deleting_old_version(self):
         old_document = SimpleNamespace(
@@ -176,6 +200,75 @@ class PluginSyncTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("上次成功更新：2026-08-03 08:00:00（北京时间）", messages[0])
         self.assertIn("目前知识条数：22", messages[0])
         self.assertIn("目标知识库：鹏仔", messages[0])
+
+    async def test_deleted_info_id_is_excluded_from_synced_chunks(self):
+        helper = FakeKnowledgeBaseHelper([])
+        plugin = self._plugin(helper)
+        plugin.config["target_knowledge_bases"] = ["kb-1"]
+        source = parse_knowledge_jsonl(
+            '{"id":"keep","title":"保留","text":"保留内容","tags":[]}\n'
+            '{"id":"remove","title":"删除","text":"删除内容","tags":[]}'
+        )
+
+        async def get_kv_data(key, default):
+            if key == plugin_module.DELETED_ENTRIES_KEY:
+                return {"remove": {"deleted_at": "2026-08-03T00:00:00+00:00"}}
+            return default
+
+        async def put_kv_data(_key, _value):
+            return None
+
+        plugin.get_kv_data = get_kv_data
+        plugin.put_kv_data = put_kv_data
+        snapshot, _ = await plugin._sync_locked(
+            GitHubKnowledgeSnapshot("1234567890abcdef", source)
+        )
+
+        self.assertEqual([entry.entry_id for entry in snapshot.entries], ["keep"])
+        upload = next(call[1] for call in helper.calls if call[0] == "upload")
+        self.assertEqual(len(upload["pre_chunked_text"]), 1)
+        self.assertIn("InfoID：keep", upload["pre_chunked_text"][0])
+        self.assertNotIn("remove", upload["pre_chunked_text"][0])
+
+    async def test_manager_delete_persists_tombstone_and_rebuilds_target(self):
+        helper = FakeKnowledgeBaseHelper([])
+        plugin = self._plugin(helper)
+        plugin.config["target_knowledge_bases"] = ["kb-1"]
+        source = GitHubKnowledgeSnapshot(
+            "1234567890abcdef",
+            parse_knowledge_jsonl(
+                '{"id":"keep","title":"保留","text":"保留内容","tags":[]}\n'
+                '{"id":"remove","title":"删除","text":"删除内容","tags":[]}'
+            ),
+        )
+        stored = {}
+
+        async def fetch_snapshot():
+            return source
+
+        async def get_kv_data(key, default):
+            return stored.get(key, default)
+
+        async def put_kv_data(key, value):
+            stored[key] = value
+
+        async def request_json(default=None):
+            return {"confirm_info_id": "remove"}
+
+        plugin._fetch_snapshot = fetch_snapshot
+        plugin.get_kv_data = get_kv_data
+        plugin.put_kv_data = put_kv_data
+        plugin_module.request.json = request_json
+        plugin_module.request.username = "admin"
+
+        result = await plugin.manager_delete_entry("remove")
+
+        self.assertTrue(result["changed"])
+        self.assertTrue(result["deleted"])
+        self.assertIn("remove", stored[plugin_module.DELETED_ENTRIES_KEY])
+        upload = next(call[1] for call in helper.calls if call[0] == "upload")
+        self.assertEqual(len(upload["pre_chunked_text"]), 1)
+        self.assertIn("InfoID：keep", upload["pre_chunked_text"][0])
 
 
 async def _async_value(value):
