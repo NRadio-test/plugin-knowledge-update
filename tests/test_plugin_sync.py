@@ -134,6 +134,26 @@ class PluginSyncTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(upload["file_name"], "NRadio-Knowledge-1234567890ab.md")
         self.assertEqual(upload["file_type"], "md")
         self.assertEqual(len(upload["pre_chunked_text"]), 1)
+        self.assertEqual(upload["batch_size"], 20)
+
+    async def test_uses_configured_embedding_batch_size(self):
+        helper = FakeKnowledgeBaseHelper([])
+        plugin = self._plugin(helper)
+        plugin.config["embedding_batch_size"] = 10
+
+        await plugin._sync_target("kb-1", self._snapshot())
+
+        upload = next(call[1] for call in helper.calls if call[0] == "upload")
+        self.assertEqual(upload["batch_size"], 10)
+
+    def test_embedding_batch_size_is_bounded_and_tolerates_invalid_values(self):
+        plugin = self._plugin(FakeKnowledgeBaseHelper([]))
+        plugin.config["embedding_batch_size"] = 0
+        self.assertEqual(plugin._embedding_batch_size(), 1)
+        plugin.config["embedding_batch_size"] = 999
+        self.assertEqual(plugin._embedding_batch_size(), 128)
+        plugin.config["embedding_batch_size"] = "invalid"
+        self.assertEqual(plugin._embedding_batch_size(), 20)
 
     async def test_skips_embedding_when_current_version_exists(self):
         current_document = SimpleNamespace(

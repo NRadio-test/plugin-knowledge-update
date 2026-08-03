@@ -19,10 +19,11 @@ AstrBot 4.24.2 及以上会识别插件的 `pages/knowledge-manager/` 页面。�
 1. 在 AstrBot 插件管理中通过仓库地址安装本插件。
 2. 先在 AstrBot 的知识库页面创建目标知识库，并配置 Embedding 模型。知识库建立后不要随意更换 Embedding 模型或向量维度。
 3. 打开插件配置，在“要接收 NRadio 内容的 AstrBot 知识库”中选择目标知识库。
-4. 为私有仓库创建 Fine-grained GitHub Token，只授予 `NRadio-test/nradio-web-platform` 的 `Contents: Read` 权限。
-5. 可以把 Token 填入插件配置；更推荐在 AstrBot 容器中设置 `NRADIO_GITHUB_TOKEN` 环境变量，这样 Token 不会写入插件配置文件。
-6. 保存并重载插件。默认在启动 15 秒后同步一次，之后每 30 分钟检查一次；GitHub 文件版本未变化时不会重复向量化。
-7. 打开插件详情中的“NRadio 知识条目管理器”，检查源条数、启用条数和目标知识库是否正确。
+4. 设置“Embedding 单批文本数”：`qwen3.7-text-embedding` 填 `20`，`text-embedding-v4` 填 `10`。这个值必须不超过模型单次允许的最大文本数量。
+5. 为私有仓库创建 Fine-grained GitHub Token，只授予 `NRadio-test/nradio-web-platform` 的 `Contents: Read` 权限。
+6. 可以把 Token 填入插件配置；更推荐在 AstrBot 容器中设置 `NRADIO_GITHUB_TOKEN` 环境变量，这样 Token 不会写入插件配置文件。
+7. 保存并重载插件。默认在启动 15 秒后同步一次，之后每 30 分钟检查一次；GitHub 文件版本未变化时不会重复向量化。
+8. 打开插件详情中的“NRadio 知识条目管理器”，检查源条数、启用条数和目标知识库是否正确。
 
 插件兼容 AstrBot 知识库选择器返回的名称或 UUID。更新插件后请完整重启一次 AstrBot 实例，使新增指令进入 Core 的指令注册表。
 

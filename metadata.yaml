@@ -2,7 +2,7 @@ name: astrbot_plugin_nradio_knowledge
 display_name: NRadio 知识库自动同步
 desc: 将经审核的 NRadio 结构化知识同步到 AstrBot，并通过插件页面按 InfoID 检索、删除和恢复单条知识。
 short_desc: 同步并按 InfoID 管理 NRadio 知识。
-version: v1.2.1
+version: v1.2.2
 author: NRadio-test
 repo: https://github.com/NRadio-test/plugin-knowledge-update
 astrbot_version: ">=4.26,<5"

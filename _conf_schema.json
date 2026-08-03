@@ -6,6 +6,14 @@
     "default": [],
     "_special": "select_knowledgebase"
   },
+  "embedding_batch_size": {
+    "type": "int",
+    "description": "Embedding 单批文本数",
+    "hint": "每次发送给 Embedding 模型的文本块数量。qwen3.7-text-embedding 最大为 20，text-embedding-v4 最大为 10；不确定时使用 10。",
+    "default": 20,
+    "min": 1,
+    "max": 128
+  },
   "github_repository": {
     "type": "string",
     "description": "GitHub 知识库仓库",
