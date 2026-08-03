@@ -9,7 +9,7 @@
   "embedding_batch_size": {
     "type": "int",
     "description": "Embedding 单批文本数",
-    "hint": "每次发送给 Embedding 模型的文本块数量。qwen3.7-text-embedding 最大为 20，text-embedding-v4 最大为 10；不确定时使用 10。",
+    "hint": "每次发送给 Embedding 模型的文本块数量：百炼 qwen3.7-text-embedding 填 20，百炼 text-embedding-v4 填 10，Google Gemini Embedding 填 32。Gemini 的批大小不能绕过免费额度限制。",
     "default": 20,
     "min": 1,
     "max": 128
