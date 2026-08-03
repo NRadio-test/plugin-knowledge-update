@@ -34,7 +34,7 @@ class TargetSyncResult:
     "astrbot_plugin_nradio_knowledge",
     "NRadio-test",
     "同步并按 InfoID 管理 NRadio AstrBot 知识库",
-    "1.2.1",
+    "1.2.2",
 )
 class NRadioKnowledgePlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
@@ -415,6 +415,7 @@ class NRadioKnowledgePlugin(Star):
             file_content=None,
             file_type="md",
             pre_chunked_text=snapshot.chunks,
+            batch_size=self._embedding_batch_size(),
         )
 
         removed = 0
@@ -428,6 +429,18 @@ class NRadioKnowledgePlugin(Star):
             uploaded=True,
             removed_documents=removed,
         )
+
+    def _embedding_batch_size(self) -> int:
+        value = self.config.get("embedding_batch_size", 20)
+        try:
+            batch_size = int(value)
+        except (TypeError, ValueError):
+            logger.warning(
+                "NRadio embedding_batch_size=%r 无效，已使用默认值 20。",
+                value,
+            )
+            return 20
+        return max(1, min(batch_size, 128))
 
     def _target_kb_ids(self) -> list[str]:
         value: Any = self.config.get("target_knowledge_bases", [])
