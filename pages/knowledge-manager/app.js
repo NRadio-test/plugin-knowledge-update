@@ -7,6 +7,9 @@ const notice = document.querySelector('#notice')
 const searchInput = document.querySelector('#search-input')
 const syncButton = document.querySelector('#sync-button')
 const refreshButton = document.querySelector('#refresh-button')
+const confirmDialog = document.querySelector('#confirm-dialog')
+const confirmSubmit = document.querySelector('#confirm-submit')
+let confirmationResolver = null
 
 const text = (tag, className, value) => {
   const node = document.createElement(tag)
@@ -26,6 +29,39 @@ const setBusy = (busy) => {
   refreshButton.disabled = busy
 }
 
+const closeConfirmation = (confirmed) => {
+  confirmDialog.hidden = true
+  const resolve = confirmationResolver
+  confirmationResolver = null
+  if (resolve) resolve(confirmed)
+}
+
+const requestConfirmation = (entry) => {
+  const restoring = entry.deleted
+  document.querySelector('#confirm-title').textContent = restoring ? '恢复这条知识？' : '删除这条知识？'
+  document.querySelector('#confirm-message').textContent = restoring
+    ? '恢复后，这条内容会重新进入 AstrBot 内容检索。'
+    : '删除后，这条内容会立即从 AstrBot 内容检索中移除。'
+  document.querySelector('#confirm-info-id').textContent = `InfoID · ${entry.info_id}`
+  document.querySelector('#confirm-hint').textContent = restoring
+    ? '系统会重新生成插件管理的知识文档。'
+    : 'GitHub 原始资料不会被永久删除，之后可以在回收站恢复。'
+  confirmSubmit.textContent = restoring ? '确认恢复' : '确认删除'
+  confirmSubmit.className = `button ${restoring ? 'primary' : 'danger'}`
+  confirmDialog.hidden = false
+  confirmSubmit.focus()
+  return new Promise((resolve) => { confirmationResolver = resolve })
+}
+
+document.querySelector('#confirm-cancel').addEventListener('click', () => closeConfirmation(false))
+confirmSubmit.addEventListener('click', () => closeConfirmation(true))
+confirmDialog.addEventListener('click', (event) => {
+  if (event.target === confirmDialog) closeConfirmation(false)
+})
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !confirmDialog.hidden) closeConfirmation(false)
+})
+
 const renderStats = (stats) => {
   document.querySelector('#source-count').textContent = String(stats.source)
   document.querySelector('#active-count').textContent = String(stats.active)
@@ -43,11 +79,9 @@ const createEntry = (entry) => {
   action.type = 'button'
   action.addEventListener('click', async () => {
     const verb = entry.deleted ? '恢复' : '删除'
-    const explanation = entry.deleted
-      ? `确认恢复 ${entry.info_id}？恢复后会重新进入 AstrBot 内容检索。`
-      : `确认删除 ${entry.info_id}？\n\n它会从 AstrBot 内容检索中移除并进入回收站，不会删除 GitHub 原始资料。`
-    if (!window.confirm(explanation)) return
+    if (!await requestConfirmation(entry)) return
     action.disabled = true
+    setNotice(`正在${verb} ${entry.info_id} 并重建 AstrBot 检索内容…`)
     try {
       await bridge.apiPost(`entries/${encodeURIComponent(entry.info_id)}/${entry.deleted ? 'restore' : 'delete'}`, {
         confirm_info_id: entry.info_id
