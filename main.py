@@ -34,7 +34,7 @@ class TargetSyncResult:
     "astrbot_plugin_nradio_knowledge",
     "NRadio-test",
     "同步并按 InfoID 管理 NRadio AstrBot 知识库",
-    "1.2.2",
+    "1.2.3",
 )
 class NRadioKnowledgePlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
