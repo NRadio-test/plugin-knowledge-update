@@ -30,6 +30,7 @@ class KnowledgeParserTests(unittest.TestCase):
 
         self.assertEqual(len(entries), 1)
         rendered = render_entry(entries[0])
+        self.assertIn("InfoID：contact-001", rendered)
         self.assertIn("知识内容：企业微信异常期间请联系指定 QQ。", rendered)
         self.assertIn("上传者：FallaxAura", rendered)
         self.assertIn("标签：联系、通知", rendered)
@@ -49,6 +50,21 @@ class KnowledgeParserTests(unittest.TestCase):
         )[0]
         snapshot = GitHubKnowledgeSnapshot("1234567890abcdef", (entry,))
         self.assertEqual(snapshot.document_name, "NRadio-Knowledge-1234567890ab.md")
+
+    def test_excluding_info_ids_creates_a_distinct_document_version(self) -> None:
+        entries = parse_knowledge_jsonl(
+            '{"id":"keep","title":"A","text":"B","tags":[]}\n'
+            '{"id":"remove","title":"C","text":"D","tags":[]}'
+        )
+        snapshot = GitHubKnowledgeSnapshot("1234567890abcdef", entries)
+
+        filtered = snapshot.excluding({"remove"})
+
+        self.assertEqual([entry.entry_id for entry in filtered.entries], ["keep"])
+        self.assertRegex(
+            filtered.document_name,
+            r"^NRadio-Knowledge-12345678-[0-9a-f]{8}\.md$",
+        )
 
     def test_only_prefixed_documents_are_managed(self) -> None:
         self.assertTrue(is_managed_document(f"{MANAGED_DOCUMENT_PREFIX}abc.md"))

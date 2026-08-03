@@ -1,0 +1,8 @@
+{
+  "pages": {
+    "knowledge-manager": {
+      "title": "NRadio 知识条目管理器",
+      "description": "按 InfoID 检索、核对、删除和恢复 AstrBot 中的知识条目。"
+    }
+  }
+}

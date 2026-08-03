@@ -1,0 +1,8 @@
+{
+  "pages": {
+    "knowledge-manager": {
+      "title": "NRadio Knowledge Manager",
+      "description": "Search, inspect, remove, and restore AstrBot knowledge entries by InfoID."
+    }
+  }
+}
