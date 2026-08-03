@@ -29,6 +29,12 @@
     "description": "仓库内结构化知识文件路径",
     "default": "knowledge-base/import/knowledge.jsonl"
   },
+  "knowledge_edit_base_url": {
+    "type": "string",
+    "description": "知识条目网页编辑器地址",
+    "hint": "插件管理页的编辑按钮会打开这个受六位口令保护的网页；插件仍然只读取 GitHub，不需要写入权限。",
+    "default": "https://nradio.fallaxaura.dpdns.org/knowledge/manage/edit/"
+  },
   "github_token": {
     "type": "string",
     "description": "GitHub Fine-grained Token（可留空改用环境变量）",

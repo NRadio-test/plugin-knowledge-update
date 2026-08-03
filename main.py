@@ -6,6 +6,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any
+from urllib.parse import urlencode
 
 from astrbot.api import AstrBotConfig, logger
 from astrbot.api.event import AstrMessageEvent, filter
@@ -34,7 +35,7 @@ class TargetSyncResult:
     "astrbot_plugin_nradio_knowledge",
     "NRadio-test",
     "同步并按 InfoID 管理 NRadio AstrBot 知识库",
-    "1.2.3",
+    "1.3.0",
 )
 class NRadioKnowledgePlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
@@ -294,7 +295,18 @@ class NRadioKnowledgePlugin(Star):
                 ).casefold()
                 if query and not all(part in haystack for part in query.split()):
                     continue
-                matches.append(_entry_payload(entry, deleted.get(entry.entry_id)))
+                matches.append(
+                    _entry_payload(
+                        entry,
+                        deleted.get(entry.entry_id),
+                        str(
+                            self.config.get(
+                                "knowledge_edit_base_url",
+                                "https://nradio.fallaxaura.dpdns.org/knowledge/manage/edit/",
+                            )
+                        ),
+                    )
+                )
 
             start = (page - 1) * page_size
             source_ids = {entry.entry_id for entry in source.entries}
@@ -476,7 +488,15 @@ def _format_sync_time(value: Any) -> str:
         return value
 
 
-def _entry_payload(entry: Any, deletion: dict[str, str] | None) -> dict[str, Any]:
+def _entry_payload(
+    entry: Any,
+    deletion: dict[str, str] | None,
+    edit_base_url: str = "https://nradio.fallaxaura.dpdns.org/knowledge/manage/edit/",
+) -> dict[str, Any]:
+    clean_edit_base_url = edit_base_url.strip() or (
+        "https://nradio.fallaxaura.dpdns.org/knowledge/manage/edit/"
+    )
+    separator = "&" if "?" in clean_edit_base_url else "?"
     return {
         "info_id": entry.entry_id,
         "title": entry.title,
@@ -487,6 +507,7 @@ def _entry_payload(entry: Any, deletion: dict[str, str] | None) -> dict[str, Any
         "verified_at": entry.verified_at,
         "confidence": entry.confidence,
         "tags": list(entry.tags),
+        "edit_url": f"{clean_edit_base_url}{separator}{urlencode({'id': entry.entry_id})}",
         "deleted": deletion is not None,
         "deleted_at": deletion.get("deleted_at", "") if deletion else "",
         "deleted_by": deletion.get("deleted_by", "") if deletion else "",

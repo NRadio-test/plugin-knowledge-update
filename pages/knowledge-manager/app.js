@@ -75,6 +75,12 @@ const createEntry = (entry) => {
   const identity = text('div')
   identity.append(text('span', 'entry-id', `InfoID · ${entry.info_id}`), text('h2', '', entry.title))
 
+  const actions = text('div', 'entry-actions')
+  const edit = text('a', 'button ghost edit-link', '编辑')
+  edit.href = entry.edit_url
+  edit.target = '_blank'
+  edit.rel = 'noreferrer'
+
   const action = text('button', `button ${entry.deleted ? 'primary' : 'danger'}`, entry.deleted ? '恢复' : '删除')
   action.type = 'button'
   action.addEventListener('click', async () => {
@@ -93,7 +99,8 @@ const createEntry = (entry) => {
       action.disabled = false
     }
   })
-  head.append(identity, action)
+  actions.append(edit, action)
+  head.append(identity, actions)
 
   const body = text('p', 'entry-text', entry.text)
   const meta = text('div', 'meta')
